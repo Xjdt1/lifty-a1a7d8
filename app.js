@@ -23,7 +23,7 @@
   ];
 
   var app = document.getElementById("app");
-  var state = { liftId: null, query: "", homeScroll: 0, offline: false };
+  var state = { liftId: null, query: "", homeScroll: 0, liftScroll: 0, findWords: null, offline: false };
 
   /* ---------- helpers ---------- */
   function esc(s) {
@@ -36,9 +36,13 @@
     return String(s).toLowerCase().replace(/\s+/g, "").replace(/[авбьсдеёоo○]/g, function (c) { return LOOK[c]; });
   }
   function normText(s) { return String(s).toLowerCase().replace(/ё/g, "е"); }
+  /* текст раздела для поиска и превью: пункты списков и строки таблиц разделены «·», ключ и пояснение — «—» */
   function stripHtml(h) {
-    return h.replace(/<br\s*\/?>/gi, " ").replace(/<[^>]+>/g, " ")
-      .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
+    return h.replace(/<\/b>\s*<span>/g, " — ").replace(/<\/td>\s*<td[^>]*>/g, " — ")
+      .replace(/<\/(li|tr|p|h3|div)>/gi, " · ")
+      .replace(/<br\s*\/?>/gi, " ").replace(/<[^>]+>/g, " ")
+      .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/\s+/g, " ")
+      .replace(/(\s*·\s*)+/g, " · ").replace(/^[\s·]+|[\s·]+$/g, "");
   }
   /* грубая основа слова: «ловители» найдёт «ловителей», «двери» — «дверей» */
   function stem(w) {
@@ -80,17 +84,18 @@
   }
 
   /* ---------- search ---------- */
-  function search(q) {
+  /* only — искать только в одном лифте (строка поиска на странице лифта) */
+  function search(q, only) {
     var qt = normText(q.trim());
     if (!qt) return [];
     var qc = normCode(q);
     var words = qt.split(/\s+/).filter(Boolean).map(stem);
     var textOk = qt.length >= 3 || /\d/.test(qt);
     var out = [];
-    LIFTS.forEach(function (l) {
+    (only ? [only] : LIFTS).forEach(function (l) {
       var liftText = normText([l.name, l.brand, l.board].concat(l.tags).join(" "));
       var tagHit = l.tags.indexOf(qt) >= 0 || normText(l.name).indexOf(qt) === 0;
-      if ((qt.length >= 3 && liftText.indexOf(qt) >= 0) || tagHit) out.push({ rank: 2, kind: "lift", lift: l });
+      if (!only && ((qt.length >= 3 && liftText.indexOf(qt) >= 0) || tagHit)) out.push({ rank: 2, kind: "lift", lift: l });
       l.codeGroups.forEach(function (g, gi) {
         g.items.forEach(function (it) {
           var cn = normCode(it[0]);
@@ -125,25 +130,47 @@
     var res = search(q);
     if (!q.trim()) { box.innerHTML = ""; listBox.hidden = false; return; }
     listBox.hidden = true;
-    var words = normText(q.trim()).split(/\s+/).filter(function (w) { return w.length >= 2; }).map(stem);
+    var words = queryWords(q);
     if (!res.length) {
       box.innerHTML = '<p class="res-count">Ничего не нашлось. Попробуйте код без пробелов (например <code>44</code>, <code>A0</code>, <code>0204</code>) или одно слово (<code>двери</code>, <code>ловители</code>).</p>';
       return;
     }
     var shown = res.slice(0, 150);
     box.innerHTML = '<p class="res-count">Найдено: ' + res.length + (res.length > shown.length ? ", показаны первые " + shown.length : "") + "</p>" +
-      shown.map(function (r) {
-        var who = '<span class="who">' + esc(r.lift.name) + "</span>";
-        if (r.kind === "code") {
-          return '<a class="res" href="#/l/' + r.lift.id + "/" + codeAnchor(r.gi, r.code) + '"><div class="top"><span class="c">' + esc(r.code) + "</span>" + who +
-            '</div><div class="txt">' + highlight(r.text, words) + "</div></a>";
-        }
-        if (r.kind === "sec") {
-          return '<a class="res" href="#/l/' + r.lift.id + "/s-" + r.sec.id + '"><div class="top"><b>' + esc(r.sec.title) + "</b>" + who +
-            '</div><div class="txt">' + highlight(r.text, words) + "</div></a>";
-        }
-        return '<a class="res" href="#/l/' + r.lift.id + '"><div class="top"><b>' + esc(r.lift.name) + '</b><span class="who">система</span></div><div class="txt">' + esc(r.lift.board) + "</div></a>";
-      }).join("");
+      shown.map(function (r) { return resHtml(r, words, false); }).join("");
+  }
+
+  /* слова запроса для подсветки (как в поиске, без однобуквенных) */
+  function queryWords(q) {
+    return normText(q.trim()).split(/\s+/).filter(function (w) { return w.length >= 2; }).map(stem);
+  }
+
+  function resHtml(r, words, inLift) {
+    var who;
+    if (!inLift) who = '<span class="who">' + esc(r.lift.name) + "</span>";
+    else if (r.kind === "sec") who = '<span class="who">раздел</span>';
+    else who = r.lift.codeGroups.length > 1 ? '<span class="who">' + esc(r.lift.codeGroups[r.gi].title.split(" (")[0]) + "</span>" : "";
+    if (r.kind === "code") {
+      return '<a class="res" href="#/l/' + r.lift.id + "/" + codeAnchor(r.gi, r.code) + '"><div class="top"><span class="c">' + esc(r.code) + "</span>" + who +
+        '</div><div class="txt">' + highlight(r.text, words) + "</div></a>";
+    }
+    if (r.kind === "sec") {
+      return '<a class="res" href="#/l/' + r.lift.id + "/s-" + r.sec.id + '"><div class="top"><b>' + esc(r.sec.title) + "</b>" + who +
+        '</div><div class="txt">' + highlight(r.text, words) + "</div></a>";
+    }
+    return '<a class="res" href="#/l/' + r.lift.id + '"><div class="top"><b>' + esc(r.lift.name) + '</b><span class="who">система</span></div><div class="txt">' + esc(r.lift.board) + "</div></a>";
+  }
+
+  function renderLiftResults(l, q, box) {
+    var res = search(q, l);
+    var words = queryWords(q);
+    var all = '<p class="res-count"><a href="#/" data-all="1">Искать во всех лифтах →</a></p>';
+    if (!res.length) {
+      box.innerHTML = '<p class="res-count">В ' + esc(l.name) + ' ничего не нашлось. Попробуйте код без пробелов или одно слово.</p>' + all;
+      return;
+    }
+    box.innerHTML = '<p class="res-count">Найдено в ' + esc(l.name) + ": " + res.length + "</p>" +
+      res.map(function (r) { return resHtml(r, words, true); }).join("") + all;
   }
 
   /* ---------- pages ---------- */
@@ -194,6 +221,9 @@
       e.preventDefault();
       q.value = ""; state.query = ""; clr.hidden = true; renderResults(""); q.focus();
     });
+    document.getElementById("results").addEventListener("click", function (e) {
+      if (e.target.closest("a.res")) state.findWords = queryWords(state.query);
+    });
     if (state.query) renderResults(state.query);
     window.scrollTo(0, state.homeScroll || 0);
   }
@@ -210,9 +240,13 @@
 
     var html = bar(back, l.name) + '<main class="wrap">' +
       '<div class="lift-head"><h1>' + esc(l.name) + "</h1><p>" + esc(l.board) + " · " + esc(l.where) + "</p></div>" +
+      '<div class="lift-tools"><label class="search">' + ICON_SEARCH +
+      '<input id="lq" type="search" placeholder="Найти в ' + esc(l.name.split(" (")[0]) + ': код или слово" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">' +
+      '<button class="clear" id="lqClear" aria-label="Очистить" hidden>✕</button></label>' +
+      '<nav class="chips">' + chips + "</nav></div>" +
+      '<div id="liftResults" hidden></div><div id="liftBody">' +
       '<div class="callout safety">Смотреть экран и журнал — безопасно. Сброс, настройку и особые режимы делает только электромеханик с допуском к этому лифту.</div>' +
-      (l.note ? '<div class="callout info">' + esc(l.note) + "</div>" : "") +
-      '<nav class="chips">' + chips + "</nav>";
+      (l.note ? '<div class="callout info">' + esc(l.note) + "</div>" : "");
 
     l.sections.forEach(function (s) {
       html += '<section class="card" id="s-' + s.id + '"><h2>' + esc(s.title) + "</h2>" + s.html + "</section>";
@@ -221,44 +255,96 @@
     l.codeGroups.forEach(function (g, gi) {
       html += '<section class="card" id="g-' + gi + '"><h2>' + esc(g.title) + "</h2>" +
         (g.note ? '<p class="group-note">' + esc(g.note) + "</p>" : "") +
-        '<label class="search codes-filter">' + ICON_SEARCH + '<input type="search" name="f' + gi + '" data-g="' + gi + '" placeholder="Найти в этом списке" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search"></label>' +
         '<div class="codes" id="codes-' + gi + '">' +
         g.items.map(function (it) {
-          return '<div class="code-row" id="' + codeAnchor(gi, it[0]) + '" data-c="' + esc(normCode(it[0])) + '" data-t="' + esc(normText(it[1])) + '"><span class="c">' + esc(it[0]) + "</span><span>" + esc(it[1]) + "</span></div>";
-        }).join("") + '<p class="empty" hidden>Нет такого кода в этом списке.</p></div></section>';
+          return '<div class="code-row" id="' + codeAnchor(gi, it[0]) + '"><span class="c">' + esc(it[0]) + "</span><span>" + esc(it[1]) + "</span></div>";
+        }).join("") + "</div></section>";
     });
 
     html += '<section class="card sources"><h2>Источники</h2><ul>' + l.sources.map(function (s) {
       return '<li><a href="' + esc(s.u) + '" target="_blank" rel="noopener">' + esc(s.t) + "</a></li>";
-    }).join("") + "</ul></section>" + footer() + "</main>";
+    }).join("") + "</ul></section></div>" + footer() + "</main>";
     app.innerHTML = html;
 
-    Array.prototype.forEach.call(app.querySelectorAll("input[data-g]"), function (inp) {
-      inp.addEventListener("keydown", function (e) { if (e.key === "Enter") inp.blur(); });
-      inp.addEventListener("input", function () {
-        var box = document.getElementById("codes-" + inp.getAttribute("data-g"));
-        var qc = normCode(inp.value), qt = normText(inp.value.trim());
-        var words = qt.split(/\s+/).filter(Boolean).map(stem);
-        var any = false;
-        Array.prototype.forEach.call(box.querySelectorAll(".code-row"), function (row) {
-          var c = row.getAttribute("data-c"), t = row.getAttribute("data-t");
-          var ok = !qt || c.indexOf(qc) === 0 || words.every(function (w) { return t.indexOf(w) >= 0; });
-          row.hidden = !ok;
-          if (ok) any = true;
-        });
-        box.querySelector(".empty").hidden = any;
-      });
+    /* поиск внутри лифта: результаты вместо содержимого, нажатие — переход к месту */
+    var lq = document.getElementById("lq");
+    var lclr = document.getElementById("lqClear");
+    var body = document.getElementById("liftBody");
+    var rbox = document.getElementById("liftResults");
+    function showBody() {
+      rbox.hidden = true; rbox.innerHTML = ""; body.hidden = false;
+    }
+    lq.addEventListener("input", function () {
+      var v = lq.value;
+      lclr.hidden = !v;
+      if (!v.trim()) { showBody(); window.scrollTo(0, state.liftScroll || 0); return; }
+      if (!body.hidden) { state.liftScroll = window.scrollY; body.hidden = true; rbox.hidden = false; window.scrollTo(0, 0); }
+      renderLiftResults(l, v, rbox);
+    });
+    lq.addEventListener("keydown", function (e) { if (e.key === "Enter") lq.blur(); });
+    lclr.addEventListener("click", function (e) {
+      e.preventDefault();
+      lq.value = ""; lclr.hidden = true; showBody(); window.scrollTo(0, state.liftScroll || 0); lq.focus();
+    });
+    rbox.addEventListener("click", function (e) {
+      if (e.target.closest("[data-all]")) { state.query = lq.value; return; }
+      if (!e.target.closest("a.res")) return;
+      state.findWords = queryWords(lq.value);
+      lq.value = ""; lclr.hidden = true; lq.blur();
+      showBody();
     });
     window.scrollTo(0, 0);
   }
 
+  /* подсветка найденных слов внутри раздела */
+  function clearFind() {
+    Array.prototype.forEach.call(app.querySelectorAll("mark.find"), function (m) {
+      var p = m.parentNode;
+      p.replaceChild(document.createTextNode(m.textContent), m);
+      p.normalize();
+    });
+  }
+  function markFind(root, words) {
+    var re = new RegExp(words.map(function (w) { return reEsc(w).replace(/е/g, "[её]"); }).join("|"), "gi");
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+    var nodes = [], first = null;
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(function (n) {
+      var t = n.nodeValue, m, last = 0;
+      re.lastIndex = 0;
+      if (!re.test(t)) return;
+      re.lastIndex = 0;
+      var frag = document.createDocumentFragment();
+      while ((m = re.exec(t))) {
+        if (!m[0]) { re.lastIndex++; continue; }
+        frag.appendChild(document.createTextNode(t.slice(last, m.index)));
+        var mk = document.createElement("mark");
+        mk.className = "find"; mk.textContent = m[0];
+        frag.appendChild(mk);
+        if (!first) first = mk;
+        last = m.index + m[0].length;
+      }
+      frag.appendChild(document.createTextNode(t.slice(last)));
+      n.parentNode.replaceChild(frag, n);
+    });
+    return first;
+  }
+
   function goAnchor(anchor) {
     Array.prototype.forEach.call(app.querySelectorAll(".code-row.hit"), function (el) { el.classList.remove("hit"); });
+    clearFind();
+    var words = state.findWords;
+    state.findWords = null;
     if (!anchor) return;
     var el = document.getElementById(anchor);
     if (!el) return;
-    if (el.classList.contains("code-row")) el.classList.add("hit");
-    requestAnimationFrame(function () { el.scrollIntoView({ block: el.classList.contains("code-row") ? "center" : "start" }); });
+    var target = el, block = "start";
+    if (el.classList.contains("code-row")) { el.classList.add("hit"); block = "center"; }
+    else if (words && words.length) {
+      var f = markFind(el, words);
+      if (f) { target = f; block = "center"; }
+    }
+    requestAnimationFrame(function () { target.scrollIntoView({ block: block }); });
   }
 
   /* ---------- router ---------- */

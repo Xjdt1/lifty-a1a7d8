@@ -106,6 +106,7 @@ kbd {
   font: inherit; font-size: 1.05rem; padding: 10px 0; outline: none; min-width: 0;
 }
 .search input::placeholder { color: var(--muted); }
+.search input::-webkit-search-cancel-button { -webkit-appearance: none; display: none; }
 .search .clear { appearance: none; border: 0; background: none; color: var(--muted); font-size: 1.2rem; padding: 6px; cursor: pointer; }
 .sticky-search { position: sticky; top: calc(env(safe-area-inset-top) + 50px); z-index: 5; background: var(--bg); padding: 8px 0; }
 
@@ -142,6 +143,23 @@ kbd {
   scrollbar-width: none; position: sticky; top: calc(env(safe-area-inset-top) + 50px); z-index: 4; background: var(--bg);
 }
 .chips::-webkit-scrollbar { display: none; }
+/* строка поиска + разделы на странице лифта, закреплены под шапкой */
+.lift-tools {
+  position: sticky; top: calc(env(safe-area-inset-top) + 50px); z-index: 5; background: var(--bg);
+  margin: 10px -16px 0; padding: 6px 16px 0;
+}
+.lift-tools .search { min-height: 42px; }
+.lift-tools .chips { position: static; padding-top: 8px; padding-bottom: 8px; }
+/* перечисление по строкам: ключ слева, пояснение справа, столбцы выровнены */
+.card ul.sub {
+  display: grid; grid-template-columns: max-content 1fr; column-gap: 14px;
+  list-style: none; padding: 0; margin: 6px 0 4px;
+}
+.card ul.sub > li { display: contents; }
+.card ul.sub > li > * { padding: 6px 0; border-top: 0.5px solid var(--line); margin: 0; }
+.card ul.sub > li > b { color: var(--accent); font-weight: 700; max-width: 9em; }
+.sub-h { margin: 12px 0 0; font-weight: 600; }
+mark.find { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 1px; }
 .chip {
   flex: none; padding: 8px 14px; border-radius: 999px; background: var(--card);
   color: var(--fg); text-decoration: none; font-size: 0.9rem; font-weight: 500;
@@ -151,7 +169,7 @@ kbd {
 
 .card {
   background: var(--card); border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px;
-  scroll-margin-top: calc(env(safe-area-inset-top) + 110px);
+  scroll-margin-top: calc(env(safe-area-inset-top) + 160px);
 }
 .card h2 { font-size: 1.2rem; margin: 0 0 10px; }
 .card h3 { font-size: 1rem; margin: 18px 0 6px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
@@ -166,6 +184,11 @@ kbd {
   width: 34%; padding-right: 12px; font-family: var(--mono); font-weight: 700;
   font-size: 0.88rem; color: var(--accent); word-break: break-word;
 }
+/* таблица со списками внутри: ключ строкой сверху, текст на всю ширину */
+.card table:has(ul, ol), .card table:has(ul, ol) tbody, .card table:has(ul, ol) tr, .card table:has(ul, ol) td { display: block; }
+.card table:has(ul, ol) td.k { width: auto; padding: 12px 0 2px; border-top: 0.5px solid var(--line); font-size: 0.95rem; }
+.card table:has(ul, ol) tr:first-child td.k { border-top: 0; padding-top: 4px; }
+.card table:has(ul, ol) td + td { border-top: 0; padding-top: 2px; }
 .steps { counter-reset: s; list-style: none; padding-left: 0 !important; }
 .steps li { counter-increment: s; position: relative; padding-left: 2em; }
 .steps li::before {
@@ -190,15 +213,13 @@ kbd {
 }
 
 /* ---------- codes ---------- */
-.codes-filter { margin: 4px 0 10px; }
 .code-row {
   display: grid; grid-template-columns: 3.2em 1fr; gap: 12px;
-  padding: 10px 0; border-top: 0.5px solid var(--line); scroll-margin-top: calc(env(safe-area-inset-top) + 120px);
+  padding: 10px 0; border-top: 0.5px solid var(--line); scroll-margin-top: calc(env(safe-area-inset-top) + 170px);
 }
 .code-row:first-child { border-top: 0; }
 .code-row .c { font-family: var(--mono); font-weight: 800; color: var(--accent); font-size: 1.02rem; }
 .code-row.hit { background: var(--mark); margin: 0 -16px; padding-left: 16px; padding-right: 16px; border-radius: 8px; }
-.empty { color: var(--muted); padding: 10px 0; }
 .group-note { color: var(--muted); font-size: 0.86rem; margin: -4px 0 8px; }
 
 /* ---------- search results ---------- */
