@@ -1,0 +1,312 @@
+(function () {
+  "use strict";
+
+  var LIFTS = window.LIFTS || [];
+  var VERSION = "16.11.2026";
+  var byId = {};
+  LIFTS.forEach(function (l) { byId[l.id] = l; });
+
+  var GROUPS = [
+    { title: "Иностранные", ids: ["schindler3300", "otis-gen2"] },
+    { title: "Отечественные", ids: ["ukl", "ul", "shulm", "nku-mppl"] }
+  ];
+  var BADGE = { schindler3300: "Sch", "otis-gen2": "Otis", ukl: "УКЛ", ul: "УЛ", shulm: "ШУЛМ", "nku-mppl": "МППЛ" };
+  var IDENT = [
+    ["Плата SEM 22, экран 2×8, шкаф в дверной раме верхнего этажа", "schindler3300"],
+    ["Платы GECB, LCB II или TCBC, разъём для сервис-тула", "otis-gen2"],
+    ["Надпись УКЛ, плата МПУ с индикатором", "ukl"],
+    ["Надпись УЛ, плата ПУ-3", "ul"],
+    ["Шкаф ШУЛМ, контроллер ПКЛ32", "shulm"],
+    ["НКУ-МППЛ или ЛиРа, блок БПШ", "nku-mppl"]
+  ];
+
+  var app = document.getElementById("app");
+  var state = { liftId: null, query: "", homeScroll: 0, offline: false };
+
+  /* ---------- helpers ---------- */
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  var LOOK = { "а": "a", "в": "b", "б": "b", "ь": "b", "с": "c", "д": "d", "е": "e", "ё": "e", "о": "0", "o": "0", "○": "0" };
+  function normCode(s) {
+    return String(s).toLowerCase().replace(/\s+/g, "").replace(/[авбьсдеёоo○]/g, function (c) { return LOOK[c]; });
+  }
+  function normText(s) { return String(s).toLowerCase().replace(/ё/g, "е"); }
+  function stripHtml(h) {
+    return h.replace(/<br\s*\/?>/gi, " ").replace(/<[^>]+>/g, " ")
+      .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
+  }
+  /* грубая основа слова: «ловители» найдёт «ловителей», «двери» — «дверей» */
+  function stem(w) {
+    if (w.length < 5) return w;
+    var s = w.replace(/[аеиоуыэюяйь]{1,2}$/, "");
+    return s.length >= 4 ? s : w;
+  }
+  function reEsc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+  function highlight(text, words) {
+    var safe = esc(text);
+    if (!words.length) return safe;
+    var re = new RegExp("(" + words.map(function (w) { return reEsc(esc(w)); }).join("|") + ")", "gi");
+    return safe.replace(re, "<mark>$1</mark>");
+  }
+  function snippet(plain, word) {
+    var i = normText(plain).indexOf(word);
+    if (i < 0) return plain.slice(0, 140) + (plain.length > 140 ? "…" : "");
+    var a = Math.max(0, i - 50), b = Math.min(plain.length, i + 110);
+    return (a > 0 ? "…" : "") + plain.slice(a, b) + (b < plain.length ? "…" : "");
+  }
+  function codeAnchor(gi, code) { return "c-" + gi + "-" + encodeURIComponent(normCode(code)); }
+  function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } return null; }
+
+  var ICON_SEARCH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>';
+  var ICON_BACK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
+  var CHEV = '<svg class="chev" viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 2l6 6-6 6"/></svg>';
+
+  function bar(left, title) {
+    return '<header class="bar">' + (left || '<span class="bar-btn"></span>') +
+      '<div class="bar-title">' + esc(title || "") + '</div>' +
+      '<button class="bar-btn right" id="sizeBtn" aria-label="Размер текста">Аа</button></header>';
+  }
+  function footer() {
+    var st = state.offline
+      ? '<span class="status ready">✓ Сохранено — работает без интернета</span>'
+      : '<span class="status">Сохраняю для работы без интернета…</span>';
+    return '<div class="foot">' + st + '<br>Версия ' + VERSION +
+      '. Собрано по открытым руководствам. Если что-то расходится с документацией на ваш лифт, верьте документации.</div>';
+  }
+
+  /* ---------- search ---------- */
+  function search(q) {
+    var qt = normText(q.trim());
+    if (!qt) return [];
+    var qc = normCode(q);
+    var words = qt.split(/\s+/).filter(Boolean).map(stem);
+    var textOk = qt.length >= 3 || /\d/.test(qt);
+    var out = [];
+    LIFTS.forEach(function (l) {
+      var liftText = normText([l.name, l.brand, l.board].concat(l.tags).join(" "));
+      var tagHit = l.tags.indexOf(qt) >= 0 || normText(l.name).indexOf(qt) === 0;
+      if ((qt.length >= 3 && liftText.indexOf(qt) >= 0) || tagHit) out.push({ rank: 2, kind: "lift", lift: l });
+      l.codeGroups.forEach(function (g, gi) {
+        g.items.forEach(function (it) {
+          var cn = normCode(it[0]);
+          var rank = -1;
+          if (cn === qc) rank = 0;
+          else if (qc.length >= 2 && cn.indexOf(qc) === 0) rank = 1;
+          else if (textOk) {
+            var tn = normText(it[1]);
+            if (words.every(function (w) { return tn.indexOf(w) >= 0; })) rank = 3;
+          }
+          if (rank >= 0) out.push({ rank: rank, kind: "code", lift: l, gi: gi, code: it[0], text: it[1] });
+        });
+      });
+      if (qt.length >= 3) {
+        l.sections.forEach(function (s) {
+          var plain = stripHtml(s.html);
+          var pn = normText(s.title + " " + plain);
+          if (words.every(function (w) { return pn.indexOf(w) >= 0; })) {
+            out.push({ rank: 4, kind: "sec", lift: l, sec: s, text: snippet(plain, words[0]) });
+          }
+        });
+      }
+    });
+    out.sort(function (a, b) { return a.rank - b.rank; });
+    return out;
+  }
+
+  function renderResults(q) {
+    var box = document.getElementById("results");
+    var listBox = document.getElementById("homeList");
+    if (!box) return;
+    var res = search(q);
+    if (!q.trim()) { box.innerHTML = ""; listBox.hidden = false; return; }
+    listBox.hidden = true;
+    var words = normText(q.trim()).split(/\s+/).filter(function (w) { return w.length >= 2; }).map(stem);
+    if (!res.length) {
+      box.innerHTML = '<p class="res-count">Ничего не нашлось. Попробуйте код без пробелов (например <code>44</code>, <code>A0</code>, <code>0204</code>) или одно слово (<code>двери</code>, <code>ловители</code>).</p>';
+      return;
+    }
+    var shown = res.slice(0, 150);
+    box.innerHTML = '<p class="res-count">Найдено: ' + res.length + (res.length > shown.length ? ", показаны первые " + shown.length : "") + "</p>" +
+      shown.map(function (r) {
+        var who = '<span class="who">' + esc(r.lift.name) + "</span>";
+        if (r.kind === "code") {
+          return '<a class="res" href="#/l/' + r.lift.id + "/" + codeAnchor(r.gi, r.code) + '"><div class="top"><span class="c">' + esc(r.code) + "</span>" + who +
+            '</div><div class="txt">' + highlight(r.text, words) + "</div></a>";
+        }
+        if (r.kind === "sec") {
+          return '<a class="res" href="#/l/' + r.lift.id + "/s-" + r.sec.id + '"><div class="top"><b>' + esc(r.sec.title) + "</b>" + who +
+            '</div><div class="txt">' + highlight(r.text, words) + "</div></a>";
+        }
+        return '<a class="res" href="#/l/' + r.lift.id + '"><div class="top"><b>' + esc(r.lift.name) + '</b><span class="who">система</span></div><div class="txt">' + esc(r.lift.board) + "</div></a>";
+      }).join("");
+  }
+
+  /* ---------- pages ---------- */
+  function renderHome() {
+    state.liftId = null;
+    document.title = "Лифты";
+    var html = bar("", "") + '<main class="wrap">' +
+      '<h1 class="large-title">Лифты</h1><p class="subtitle">Платы управления: экран, кнопки, меню, коды ошибок</p>' +
+      '<div class="sticky-search"><label class="search">' + ICON_SEARCH +
+      '<input id="q" type="search" placeholder="Код ошибки или слово" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" value="' + esc(state.query) + '">' +
+      '<button class="clear" id="qClear" aria-label="Очистить"' + (state.query ? "" : " hidden") + '>✕</button></label></div>' +
+      '<div id="results"></div><div id="homeList">';
+
+    if (window.navigator.standalone === false) {
+      html += '<div class="callout info"><b>Поставьте значок на экран.</b> Внизу Safari нажмите «Поделиться» (квадрат со стрелкой) → «На экран „Домой“». Потом один раз откройте значок с интернетом — дальше справочник работает и без связи.</div>';
+    }
+
+    GROUPS.forEach(function (g) {
+      html += '<h2 class="group-title">' + esc(g.title) + '</h2><nav class="list">';
+      g.ids.forEach(function (id) {
+        var l = byId[id];
+        if (!l) return;
+        var b = BADGE[id] || l.name.slice(0, 2);
+        html += '<a class="row" href="#/l/' + id + '"><span class="ico"' + (b.length >= 4 ? ' style="font-size:.62rem"' : "") + ">" + esc(b) + '</span><span class="main"><span class="t">' +
+          esc(l.name) + '</span><span class="s">' + esc(l.board) + "</span></span>" + CHEV + "</a>";
+      });
+      html += "</nav>";
+    });
+
+    html += '<h2 class="group-title">Какая у меня система?</h2><div class="card ident"><table><tbody>' +
+      IDENT.map(function (r) {
+        return '<tr><td>' + esc(r[0]) + '</td><td class="k"><a href="#/l/' + r[1] + '">' + esc(byId[r[1]].name) + "</a></td></tr>";
+      }).join("") +
+      '</tbody></table><p class="group-note" style="margin-top:10px">Лифты МЛМ, ЩЛЗ, КМЗ и ОТИС-СПб комплектуют разными шкафами — смотрите надпись на шкафу управления.</p></div>';
+
+    html += "</div>" + footer() + "</main>";
+    app.innerHTML = html;
+
+    var q = document.getElementById("q");
+    var clr = document.getElementById("qClear");
+    q.addEventListener("input", function () {
+      state.query = q.value;
+      clr.hidden = !q.value;
+      renderResults(q.value);
+    });
+    q.addEventListener("keydown", function (e) { if (e.key === "Enter") q.blur(); });
+    clr.addEventListener("click", function (e) {
+      e.preventDefault();
+      q.value = ""; state.query = ""; clr.hidden = true; renderResults(""); q.focus();
+    });
+    if (state.query) renderResults(state.query);
+    window.scrollTo(0, state.homeScroll || 0);
+  }
+
+  function renderLift(l) {
+    state.liftId = l.id;
+    document.title = l.name;
+    var back = '<a class="bar-btn" href="#/">' + ICON_BACK + "Лифты</a>";
+    var chips = l.sections.map(function (s) {
+      return '<a class="chip" href="#/l/' + l.id + "/s-" + s.id + '">' + esc(s.title) + "</a>";
+    }).join("") + l.codeGroups.map(function (g, gi) {
+      return '<a class="chip code" href="#/l/' + l.id + "/g-" + gi + '">' + (l.codeGroups.length > 1 ? esc(g.title.split(" (")[0]) : "Коды") + "</a>";
+    }).join("");
+
+    var html = bar(back, l.name) + '<main class="wrap">' +
+      '<div class="lift-head"><h1>' + esc(l.name) + "</h1><p>" + esc(l.board) + " · " + esc(l.where) + "</p></div>" +
+      '<div class="callout safety">Смотреть экран и журнал — безопасно. Сброс, настройку и особые режимы делает только электромеханик с допуском к этому лифту.</div>' +
+      (l.note ? '<div class="callout info">' + esc(l.note) + "</div>" : "") +
+      '<nav class="chips">' + chips + "</nav>";
+
+    l.sections.forEach(function (s) {
+      html += '<section class="card" id="s-' + s.id + '"><h2>' + esc(s.title) + "</h2>" + s.html + "</section>";
+    });
+
+    l.codeGroups.forEach(function (g, gi) {
+      html += '<section class="card" id="g-' + gi + '"><h2>' + esc(g.title) + "</h2>" +
+        (g.note ? '<p class="group-note">' + esc(g.note) + "</p>" : "") +
+        '<label class="search codes-filter">' + ICON_SEARCH + '<input type="search" name="f' + gi + '" data-g="' + gi + '" placeholder="Найти в этом списке" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search"></label>' +
+        '<div class="codes" id="codes-' + gi + '">' +
+        g.items.map(function (it) {
+          return '<div class="code-row" id="' + codeAnchor(gi, it[0]) + '" data-c="' + esc(normCode(it[0])) + '" data-t="' + esc(normText(it[1])) + '"><span class="c">' + esc(it[0]) + "</span><span>" + esc(it[1]) + "</span></div>";
+        }).join("") + '<p class="empty" hidden>Нет такого кода в этом списке.</p></div></section>';
+    });
+
+    html += '<section class="card sources"><h2>Источники</h2><ul>' + l.sources.map(function (s) {
+      return '<li><a href="' + esc(s.u) + '" target="_blank" rel="noopener">' + esc(s.t) + "</a></li>";
+    }).join("") + "</ul></section>" + footer() + "</main>";
+    app.innerHTML = html;
+
+    Array.prototype.forEach.call(app.querySelectorAll("input[data-g]"), function (inp) {
+      inp.addEventListener("keydown", function (e) { if (e.key === "Enter") inp.blur(); });
+      inp.addEventListener("input", function () {
+        var box = document.getElementById("codes-" + inp.getAttribute("data-g"));
+        var qc = normCode(inp.value), qt = normText(inp.value.trim());
+        var words = qt.split(/\s+/).filter(Boolean).map(stem);
+        var any = false;
+        Array.prototype.forEach.call(box.querySelectorAll(".code-row"), function (row) {
+          var c = row.getAttribute("data-c"), t = row.getAttribute("data-t");
+          var ok = !qt || c.indexOf(qc) === 0 || words.every(function (w) { return t.indexOf(w) >= 0; });
+          row.hidden = !ok;
+          if (ok) any = true;
+        });
+        box.querySelector(".empty").hidden = any;
+      });
+    });
+    window.scrollTo(0, 0);
+  }
+
+  function goAnchor(anchor) {
+    Array.prototype.forEach.call(app.querySelectorAll(".code-row.hit"), function (el) { el.classList.remove("hit"); });
+    if (!anchor) return;
+    var el = document.getElementById(anchor);
+    if (!el) return;
+    if (el.classList.contains("code-row")) el.classList.add("hit");
+    requestAnimationFrame(function () { el.scrollIntoView({ block: el.classList.contains("code-row") ? "center" : "start" }); });
+  }
+
+  /* ---------- router ---------- */
+  function route(force) {
+    var h = decodeURIComponent(location.hash.replace(/^#\/?/, ""));
+    var m = h.match(/^l\/([^/]+)(?:\/(.+))?$/);
+    if (m && byId[m[1]]) {
+      var anchor = m[2] ? (m[2].indexOf("c-") === 0 ? "c-" + m[2].slice(2).replace(/^(\d+)-(.*)$/, function (_, g, c) { return g + "-" + encodeURIComponent(c); }) : m[2]) : "";
+      if (state.liftId !== m[1]) {
+        if (state.liftId === null) state.homeScroll = window.scrollY;
+        renderLift(byId[m[1]]);
+      }
+      goAnchor(anchor);
+    } else {
+      if (state.liftId !== null || !document.getElementById("q")) renderHome();
+    }
+    bindSize();
+  }
+
+  function bindSize() {
+    var b = document.getElementById("sizeBtn");
+    if (b && !b._bound) {
+      b._bound = true;
+      b.addEventListener("click", function () {
+        var big = document.documentElement.classList.toggle("big");
+        store("lift-big", big ? "1" : "0");
+      });
+    }
+  }
+
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest("a[href^=\"#\"]");
+    if (a && a.getAttribute("href") === location.hash) { e.preventDefault(); route(true); }
+  });
+  if (store("lift-big") === "1") document.documentElement.classList.add("big");
+  window.addEventListener("hashchange", route);
+  route();
+
+  /* ---------- offline ---------- */
+  function setOffline() {
+    state.offline = true;
+    var st = document.querySelector(".foot .status");
+    if (st) { st.className = "status ready"; st.textContent = "✓ Сохранено — работает без интернета"; }
+  }
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").then(function () {
+      return navigator.serviceWorker.ready;
+    }).then(setOffline).catch(function () {
+      var st = document.querySelector(".foot .status");
+      if (st) st.textContent = "Без интернета пока не работает: откройте с интернетом ещё раз";
+    });
+  }
+})();
