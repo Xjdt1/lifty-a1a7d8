@@ -89,6 +89,7 @@
     var qt = normText(q.trim());
     if (!qt) return [];
     var qc = normCode(q);
+    var qn = /^\d+$/.test(qc) ? qc.replace(/^0+(?=\d)/, "") : "";
     var words = qt.split(/\s+/).filter(Boolean).map(stem);
     var textOk = qt.length >= 3 || /\d/.test(qt);
     var out = [];
@@ -100,7 +101,11 @@
         g.items.forEach(function (it) {
           var cn = normCode(it[0]);
           var rank = -1;
+          var rg = /^(\d+)[–-](\d+)$/.exec(cn);
           if (cn === qc) rank = 0;
+          /* ведущие нули не важны: «301» найдёт 0301; диапазон «2200–2205» найдётся по 2203 */
+          else if (qn && cn.replace(/^0+(?=\d)/, "") === qn) rank = 0;
+          else if (qn && rg && +qn >= +rg[1] && +qn <= +rg[2]) rank = 0;
           else if (qc.length >= 2 && cn.indexOf(qc) === 0) rank = 1;
           else if (textOk) {
             var tn = normText(it[1]);
