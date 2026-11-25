@@ -309,3 +309,13 @@ mark.find { background: var(--mark); color: inherit; border-radius: 3px; padding
 .code-modal-section > ul > li {
   margin: 3px 0; font-size: 0.95rem;
 }
+
+.station-group { margin: 12px 0; border: 1px solid color-mix(in srgb,currentColor 18%,transparent); border-radius: 14px; overflow: hidden; }
+.station-group summary { list-style: none; display: flex; align-items: center; gap: 12px; padding: 18px; cursor: pointer; font-weight: 700; background: linear-gradient(105deg,rgba(38,133,191,.17),transparent); }
+.station-group summary::-webkit-details-marker { display:none; }
+.station-group summary small { margin-left:auto; font-variant-numeric: tabular-nums; opacity:.7; }
+.station-group summary::after { content:""; width:8px; height:8px; margin:0 4px; border-right:2px solid; border-bottom:2px solid; transform:rotate(45deg); transition:transform .18s; }
+.station-group[open] summary::after { transform:rotate(225deg); }
+.station-group[open] nav { margin:0; animation:station-open .18s ease-out; }
+@keyframes station-open { from {opacity:.3; transform:translateY(-4px)} to {opacity:1; transform:none} }
+@media(prefers-reduced-motion:reduce){.station-group[open] nav{animation:none}.station-group summary::after{transition:none}}

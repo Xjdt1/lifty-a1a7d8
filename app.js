@@ -2,14 +2,14 @@
   "use strict";
 
   var LIFTS = window.LIFTS || [];
-  var VERSION = "16.11.2026";
+  var VERSION = "26.11.2026";
   var byId = {};
   LIFTS.forEach(function (l) { byId[l.id] = l; });
 
   var GROUPS = [
-    { title: "Приводы", ids: ["abb-acsm1", "schindler-fc", "varidor-15", "otis-drive", "buad-4-25"] },
     { title: "Иностранные", ids: ["schindler3300", "otis-gen2"] },
-    { title: "Отечественные", ids: ["ukl", "ul", "uel", "shk6000", "shulm", "nku-mppl"] }
+    { title: "Отечественные", ids: ["ukl", "ul", "uel", "shk6000", "shulm", "nku-mppl"] },
+    { title: "Приводы", ids: ["abb-acsm1", "schindler-fc", "varidor-15", "otis-drive", "buad-4-25"] }
   ];
   var BADGE = { schindler3300: "Sch", "otis-gen2": "Otis", ukl: "УКЛ", ul: "УЛ", uel: "УЭЛ", shk6000: "ШК", shulm: "ШУЛМ", "nku-mppl": "МППЛ" };
   var app = document.getElementById("app");
@@ -186,7 +186,7 @@
     state.liftId = null;
     document.title = "Лифты";
     var html = bar("", "") + '<main class="wrap">' +
-      '<h1 class="large-title">Лифты</h1><p class="subtitle">Платы управления: экран, кнопки, меню, коды ошибок</p>' +
+      '<h1 class="large-title">Лифты</h1><p class="subtitle">Выберите станцию или привод, чтобы найти ошибку и порядок проверки.</p>' +
       '<div class="sticky-search"><label class="search">' + ICON_SEARCH +
       '<input id="q" type="search" placeholder="Код ошибки или слово" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" value="' + esc(state.query) + '">' +
       '<button class="clear" id="qClear" aria-label="Очистить"' + (state.query ? "" : " hidden") + '>✕</button></label></div>' +
@@ -197,7 +197,7 @@
     }
 
     GROUPS.forEach(function (g) {
-      html += '<h2 class="group-title">' + esc(g.title) + '</h2><nav class="list">';
+      html += '<details class="station-group"><summary><span>' + esc(g.title) + '</span><small>' + g.ids.length + '</small></summary><nav class="list">';
       g.ids.forEach(function (id) {
         var l = byId[id];
         if (!l) return;
@@ -205,7 +205,7 @@
         html += '<a class="row" href="#/l/' + id + '"><span class="ico"' + (b.length >= 4 ? ' style="font-size:.62rem"' : "") + ">" + esc(b) + '</span><span class="main"><span class="t">' +
           esc(l.name) + '</span><span class="s">' + esc(l.board) + "</span></span>" + CHEV + "</a>";
       });
-      html += "</nav>";
+      html += "</nav></details>";
     });
 
     html += "</div>" + footer() + "</main>";
@@ -401,7 +401,7 @@
 
     var content = document.getElementById("modalContent");
     var title = document.getElementById("modalTitle");
-    title.textContent = "Код: " + codeText;
+    title.textContent = byId[state.liftId].name + " · " + codeText;
 
     /* основное описание + доп. детали из CODE_DETAILS */
     var html = '<div class="code-modal-header">' +
@@ -413,7 +413,7 @@
       '</div>';
 
     /* расширенные данные из PDF (если загружены) */
-    var details = window.CODE_DETAILS && window.CODE_DETAILS[codeText];
+    var details = state.liftId === "schindler3300" && window.CODE_DETAILS && window.CODE_DETAILS[codeText];
     if (details) {
       if (details.causes && details.causes.length) {
         html += '<div class="code-modal-section"><h3>Причины</h3><ul>' +
