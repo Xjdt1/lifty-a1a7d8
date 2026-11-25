@@ -61,40 +61,7 @@ window.LIFTS = [
 <tr><td class="k">DWNLD</td><td>По названию — загрузка программы в плату.</td></tr>
 <tr><td class="k">IUSK, ISPT, RTS, ISK</td><td>Подписи над четырьмя звёздочками экрана — точки цепи безопасности.</td></tr>
 </tbody></table>` },
-    { id: "menu", title: "Меню 10–60", html: `
-<ol class="steps">
-<li><kbd>OK</kbd> на главном экране → внизу слева <code>10</code>.</li>
-<li><kbd>↑</kbd> <kbd>↓</kbd> — выбрать меню, <kbd>OK</kbd> — войти, <kbd>ESC</kbd> — назад.</li>
-</ol>
-<table><tbody>
-<tr><td class="k">10</td><td><span class="pill warn">осторожно</span> Команды:
-<ul class="sub">
-<li><b>101</b><span>сброс системы</span></li>
-<li><b>110</b><span>вызов в кабину</span></li>
-<li><b>111</b><span>вызов с этажа</span></li>
-<li><b>112</b><span>открыть дверь</span></li>
-<li><b>113</b><span>закрыть дверь</span></li>
-<li><b>117</b><span>«механик на объекте»</span></li>
-</ul>
-<p class="sub-h"><span class="pill no">не трогать</span></p>
-<ul class="sub">
-<li><b>102</b><span>езда без энкодера, контакты тормоза не проверяются</span></li>
-<li><b>105</b><span>монтажный режим</span></li>
-<li><b>116</b><span>обучающая поездка, перезаписывает карту шахты</span></li>
-<li><b>121</b><span>запись программы</span></li>
-</ul></td></tr>
-<tr><td class="k">20</td><td><span class="pill no">не трогать</span> Приёмочные испытания: ловители, ограничитель скорости, тормоз.</td></tr>
-<tr><td class="k">30</td><td><span class="pill ok">смотреть</span>
-<ul class="sub">
-<li><b>301</b><span>версии программ (30101 — главный процессор)</span></li>
-<li><b>302</b><span>железо</span></li>
-<li><b>303</b><span>тип двери</span></li>
-<li><b>305</b><span>входы и выходы</span></li>
-<li><b>306</b><span>привод</span></li>
-<li><b>307</b><span>платы на связи</span></li>
-<li><b>309</b><span>номер в группе</span></li>
-</ul></td></tr>
-<tr><td class="k">40</td><td><span class="pill no">не трогать</span> Настройка. Вход ставит лифт в режим 52 и гонит кабину на этаж шкафа. Выход: <kbd>ESC</kbd> до «40 … 1», <kbd>↓</kbd> до 0, <kbd>OK</kbd>.<details><summary>Меню 40 · группы параметров</summary><p><b>CF</b> — группа, <b>PA</b> — параметр внутри группы, <b>VL</b> — его значение. Набор групп зависит от версии ПО.</p><ul class="sub">
+    { id: "menu40", title: "Меню 40", html: `<p><b>CF</b> — группа, <b>PA</b> — параметр внутри группы, <b>VL</b> — его значение. Набор групп зависит от версии ПО.</p><ul class="sub">
 <li><b>CF 00</b><span>Устройства BIOBUS</span></li>
 <li><b>CF 01</b><span>Обозначения остановок</span></li>
 <li><b>CF 02</b><span>Обслуживание</span></li>
@@ -132,7 +99,41 @@ window.LIFTS = [
 <li><b>CF 96</b><span>Значения системы взвешивания CLC</span></li>
 <li><b>CF 97</b><span>Конфигурация CLC</span></li>
 <li><b>CF 98</b><span>Частота при пустой кабине</span></li>
-<li><b>CF 99</b><span>Калибровка частоты при эталонной нагрузке</span></li></ul><p>Schindler Bionic, K 608208_RU_13, § 5.3, с. 128–132.</p></details></td></tr>
+<li><b>CF 99</b><span>Калибровка частоты при эталонной нагрузке</span></li></ul><p>Schindler Bionic, K 608208_RU_13, § 5.3, с. 128–132.</p>` },
+    { id: "menu", title: "Меню 10–60", html: `
+<ol class="steps">
+<li><kbd>OK</kbd> на главном экране → внизу слева <code>10</code>.</li>
+<li><kbd>↑</kbd> <kbd>↓</kbd> — выбрать меню, <kbd>OK</kbd> — войти, <kbd>ESC</kbd> — назад.</li>
+</ol>
+<table><tbody>
+<tr><td class="k">10</td><td><span class="pill warn">осторожно</span> Команды:
+<ul class="sub">
+<li><b>101</b><span>сброс системы</span></li>
+<li><b>110</b><span>вызов в кабину</span></li>
+<li><b>111</b><span>вызов с этажа</span></li>
+<li><b>112</b><span>открыть дверь</span></li>
+<li><b>113</b><span>закрыть дверь</span></li>
+<li><b>117</b><span>«механик на объекте»</span></li>
+</ul>
+<p class="sub-h"><span class="pill no">не трогать</span></p>
+<ul class="sub">
+<li><b>102</b><span>езда без энкодера, контакты тормоза не проверяются</span></li>
+<li><b>105</b><span>монтажный режим</span></li>
+<li><b>116</b><span>обучающая поездка, перезаписывает карту шахты</span></li>
+<li><b>121</b><span>запись программы</span></li>
+</ul></td></tr>
+<tr><td class="k">20</td><td><span class="pill no">не трогать</span> Приёмочные испытания: ловители, ограничитель скорости, тормоз.</td></tr>
+<tr><td class="k">30</td><td><span class="pill ok">смотреть</span>
+<ul class="sub">
+<li><b>301</b><span>версии программ (30101 — главный процессор)</span></li>
+<li><b>302</b><span>железо</span></li>
+<li><b>303</b><span>тип двери</span></li>
+<li><b>305</b><span>входы и выходы</span></li>
+<li><b>306</b><span>привод</span></li>
+<li><b>307</b><span>платы на связи</span></li>
+<li><b>309</b><span>номер в группе</span></li>
+</ul></td></tr>
+<tr><td class="k">40</td><td><span class="pill no">не трогать</span> Настройка. Вход ставит лифт в режим 52 и гонит кабину на этаж шкафа. Выход: <kbd>ESC</kbd> до «40 … 1», <kbd>↓</kbd> до 0, <kbd>OK</kbd>. <a href="#/l/schindler3300/s-menu40">Группы параметров меню 40</a></td></tr>
 <tr><td class="k">50</td><td><span class="pill ok">смотреть</span>
 <ul class="sub">
 <li><b>501</b><span>журнал: 30 событий, 01 — самое свежее</span></li>
