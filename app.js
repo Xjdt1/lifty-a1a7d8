@@ -197,7 +197,7 @@
     }
 
     GROUPS.forEach(function (g) {
-      html += '<details class="station-group"><summary><i class="shaft" aria-hidden="true"></i><span>' + esc(g.title) + '</span><small>' + g.ids.length + '</small></summary><nav class="list">';
+      html += '<section class="station-group"><button type="button" class="group-toggle" aria-expanded="false" aria-controls="models-' + g.ids[0] + '"><i class="shaft" aria-hidden="true"></i><span>' + esc(g.title) + '</span><small>' + g.ids.length + '</small></button><div class="group-panel" inert id="models-' + g.ids[0] + '"><nav class="list">';
       g.ids.forEach(function (id) {
         var l = byId[id];
         if (!l) return;
@@ -205,12 +205,19 @@
         html += '<a class="row" href="#/l/' + id + '"><span class="ico"' + (b.length >= 4 ? ' style="font-size:.62rem"' : "") + ">" + esc(b) + '</span><span class="main"><span class="t">' +
           esc(l.name) + '</span><span class="s">' + esc(l.board) + "</span></span>" + CHEV + "</a>";
       });
-      html += "</nav></details>";
+      html += "</nav></div></section>";
     });
 
     html += "</div>" + footer() + "</main>";
     app.innerHTML = html;
 
+    app.querySelectorAll(".group-toggle").forEach(function (button) {
+      button.addEventListener("click", function () {
+        var open = button.getAttribute("aria-expanded") !== "true";
+        button.setAttribute("aria-expanded", String(open));
+        document.getElementById(button.getAttribute("aria-controls")).toggleAttribute("inert", !open);
+      });
+    });
     var q = document.getElementById("q");
     var clr = document.getElementById("qClear");
     q.addEventListener("input", function () {
