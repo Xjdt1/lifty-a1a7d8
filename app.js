@@ -7,6 +7,7 @@
   LIFTS.forEach(function (l) { byId[l.id] = l; });
 
   var GROUPS = [
+    { title: "Приводы", ids: ["abb-acsm1", "schindler-fc", "varidor-15", "otis-drive"] },
     { title: "Иностранные", ids: ["schindler3300", "otis-gen2"] },
     { title: "Отечественные", ids: ["ukl", "ul", "uel", "shk6000", "shulm", "nku-mppl"] }
   ];

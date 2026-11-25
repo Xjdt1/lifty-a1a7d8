@@ -2058,5 +2058,85 @@ window.LIFTS = [
       ["97","Превышение номинальной скорости"]
     ]}
   ]
+},
+{
+  "id": "abb-acsm1",
+  "name": "ABB ACSM1",
+  "brand": "ABB ACSM1",
+  "board": "Главный привод",
+  "where": "УЭЛ",
+  "tags": [
+    "привод",
+    "abb acsm1"
+  ],
+  "sections": [
+    {
+      "id": "guide",
+      "title": "Диагностика",
+      "html": "<p>В шкафу УЭЛ код 45 указывает на проблему привода. Собственный код преобразователя читается на панели ABB.</p><p><a href=\"#/l/uel/s-panel\">Пульт шкафа УЭЛ</a></p>"
+    }
+  ],
+  "codeGroups": [],
+  "sources": []
+},
+{
+  "id": "schindler-fc",
+  "name": "Schindler FC",
+  "brand": "Schindler FC",
+  "board": "Главный привод",
+  "where": "Schindler 3300",
+  "tags": [
+    "привод",
+    "schindler fc"
+  ],
+  "sections": [
+    {
+      "id": "guide",
+      "title": "Диагностика",
+      "html": "<p>В меню 40 группа CF 16 относится к преобразователю FC. События привода и тормоза собраны в журнале контроллера.</p><p><a href=\"#/l/schindler3300/g-3\">Журнал привода и тормоза</a></p>"
+    }
+  ],
+  "codeGroups": [],
+  "sources": []
+},
+{
+  "id": "varidor-15",
+  "name": "Varidor 15",
+  "brand": "Varidor 15",
+  "board": "Привод дверей",
+  "where": "Schindler",
+  "tags": [
+    "привод",
+    "varidor 15"
+  ],
+  "sections": [
+    {
+      "id": "guide",
+      "title": "Диагностика",
+      "html": "<p>Группа CF 18 в меню 40 относится к дверному приводу Varidor 15. Наличие группы зависит от комплектации и версии ПО.</p><p><a href=\"#/l/schindler3300/s-menu40\">Меню 40 Schindler</a></p>"
+    }
+  ],
+  "codeGroups": [],
+  "sources": []
+},
+{
+  "id": "otis-drive",
+  "name": "Привод Otis GeN2",
+  "brand": "Привод Otis GeN2",
+  "board": "Главный привод",
+  "where": "Otis GeN2",
+  "tags": [
+    "привод",
+    "привод otis gen2"
+  ],
+  "sections": [
+    {
+      "id": "guide",
+      "title": "Диагностика",
+      "html": "<p>В журнале платы GECB событие 0010 означает потерю связи с преобразователем по CAN.</p><p><a href=\"#/l/otis-gen2/g-0\">События платы GECB</a></p>"
+    }
+  ],
+  "codeGroups": [],
+  "sources": []
 }
 ];
