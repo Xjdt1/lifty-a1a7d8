@@ -75,6 +75,19 @@
       '<div class="bar-title">' + esc(title || "") + '</div>' +
       '<button class="bar-btn right" id="sizeBtn" aria-label="Размер текста">Аа</button></header>';
   }
+  /* modal для детальной информации о коде ошибки */
+  function createModal() {
+    var modal = document.createElement("div");
+    modal.className = "modal-overlay";
+    modal.id = "codeModal";
+    modal.innerHTML = '<div class="modal-box">' +
+      '<header class="bar"><button class="modal-close" id="modalClose" aria-label="Закрыть">✕</button>' +
+      '<div class="bar-title" id="modalTitle">Код ошибки</div></header>' +
+      '<div class="modal-content" id="modalContent"></div>' +
+      '</div>';
+    return modal;
+  }
+
   function footer() {
     var st = state.offline
       ? '<span class="status ready">✓ Сохранено — работает без интернета</span>'
@@ -387,6 +400,64 @@
   if (store("lift-big") === "1") document.documentElement.classList.add("big");
   window.addEventListener("hashchange", route);
   route();
+
+  /* ---------- modal для кодов ошибок ---------- */
+  var modal = createModal();
+  document.body.appendChild(modal);
+
+  /* обработка клика на код ошибки (.code-row) */
+  document.addEventListener("click", function (e) {
+    var codeRow = e.target.closest && e.target.closest(".code-row");
+    if (!codeRow) return;
+    var codeEl = codeRow.querySelector(".c");
+    if (!codeEl) return;
+    var codeText = codeEl.textContent.trim();
+    var codeDescSpan = codeRow.querySelector("span:last-child");
+    var codeDesc = codeDescSpan ? codeDescSpan.textContent.trim() : "";
+
+    var content = document.getElementById("modalContent");
+    var title = document.getElementById("modalTitle");
+    title.textContent = "Код: " + codeText;
+
+    /* основное описание + доп. детали из CODE_DETAILS */
+    var html = '<div class="code-modal-header">' +
+      '<span class="code-modal-code">' + esc(codeText) + '</span>' +
+      '</div>' +
+      '<div class="code-modal-section">' +
+      '<h3>Расшифровка</h3>' +
+      '<p>' + esc(codeDesc) + '</p>' +
+      '</div>';
+
+    /* расширенные данные из PDF (если загружены) */
+    var details = window.CODE_DETAILS && window.CODE_DETAILS[codeText];
+    if (details) {
+      if (details.causes && details.causes.length) {
+        html += '<div class="code-modal-section"><h3>Причины</h3><ul>' +
+          details.causes.map(function (c) { return '<li>' + esc(c) + '</li>'; }).join("") +
+          '</ul></div>';
+      }
+      if (details.actions && details.actions.length) {
+        html += '<div class="code-modal-section"><h3>Действия для устранения</h3><ul>' +
+          details.actions.map(function (a) { return '<li>' + esc(a) + '</li>'; }).join("") +
+          '</ul></div>';
+      }
+    }
+
+    content.innerHTML = html;
+    modal.classList.add("open");
+    modal.scrollTop = 0;
+  });
+
+  /* закрытие модала по нажатию на кнопку или overlay */
+  document.getElementById("modalClose").addEventListener("click", function (e) {
+    e.preventDefault();
+    modal.classList.remove("open");
+  });
+  modal.addEventListener("click", function (e) {
+    if (e.target === modal) {
+      modal.classList.remove("open");
+    }
+  });
 
   /* ---------- offline ---------- */
   function setOffline() {

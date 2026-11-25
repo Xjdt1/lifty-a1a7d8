@@ -216,8 +216,10 @@ mark.find { background: var(--mark); color: inherit; border-radius: 3px; padding
 .code-row {
   display: grid; grid-template-columns: 3.2em 1fr; gap: 12px;
   padding: 10px 0; border-top: 0.5px solid var(--line); scroll-margin-top: calc(env(safe-area-inset-top) + 170px);
+  cursor: pointer; transition: background 0.15s;
 }
 .code-row:first-child { border-top: 0; }
+.code-row:active { background: var(--chip); border-radius: 6px; padding: 10px 8px; margin: 0 -8px; }
 .code-row .c { font-family: var(--mono); font-weight: 800; color: var(--accent); font-size: 1.02rem; }
 .code-row.hit { background: var(--mark); margin: 0 -16px; padding-left: 16px; padding-right: 16px; border-radius: 8px; }
 .group-note { color: var(--muted); font-size: 0.86rem; margin: -4px 0 8px; }
@@ -242,3 +244,69 @@ mark.find { background: var(--mark); color: inherit; border-radius: 3px; padding
 .foot .status { display: inline-block; padding: 4px 10px; border-radius: 999px; background: var(--chip); margin-bottom: 8px; }
 .foot .status.ready { background: var(--ok-bg); color: var(--ok); }
 .ident td.k { width: 42%; }
+
+/* ---------- modal для детальной информации о кодах ошибок ---------- */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.6); display: flex; align-items: flex-end;
+  z-index: 1000; opacity: 0; transition: opacity 0.2s; pointer-events: none;
+}
+.modal-overlay.open {
+  opacity: 1; pointer-events: auto;
+}
+.modal-box {
+  background: var(--card); width: 100%; max-height: 85vh;
+  border-radius: 24px 24px 0 0; display: flex; flex-direction: column;
+  padding: calc(env(safe-area-inset-top) + 12px) 0 calc(env(safe-area-inset-bottom) + 12px);
+  animation: modalSlideUp 0.3s ease-out;
+  overflow-y: auto;
+}
+@keyframes modalSlideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.modal-overlay.open .modal-box {
+  animation: modalSlideUp 0.3s ease-out;
+}
+.modal-box > .bar {
+  position: static; border-bottom: 0.5px solid var(--line);
+  padding-left: 16px; padding-right: 16px; margin-bottom: 2px;
+}
+.modal-box .bar-title { text-align: left; }
+.modal-close {
+  background: none; border: 0; color: var(--muted); font-size: 1.3rem;
+  padding: 8px 12px; cursor: pointer; margin-left: auto;
+}
+.modal-content {
+  flex: 1; overflow-y: auto; padding: 0 16px;
+}
+.code-modal-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+  padding: 12px 0; border-bottom: 1px solid var(--line);
+}
+.code-modal-code {
+  font-family: var(--mono); font-size: 1.8rem; font-weight: 800;
+  color: var(--accent); flex: none;
+}
+.code-modal-title {
+  flex: 1; font-weight: 600; font-size: 1.1rem;
+}
+.code-modal-section {
+  margin: 14px 0; padding: 12px 0; border-top: 0.5px solid var(--line);
+}
+.code-modal-section:first-of-type {
+  margin-top: 0; padding-top: 0; border-top: 0;
+}
+.code-modal-section > h3 {
+  font-size: 0.9rem; color: var(--muted); text-transform: uppercase;
+  letter-spacing: 0.05em; margin: 0 0 6px; font-weight: 600;
+}
+.code-modal-section > p {
+  margin: 0; line-height: 1.5; font-size: 0.95rem;
+}
+.code-modal-section > ul {
+  margin: 4px 0; padding-left: 1.2em; list-style: disc;
+}
+.code-modal-section > ul > li {
+  margin: 3px 0; font-size: 0.95rem;
+}

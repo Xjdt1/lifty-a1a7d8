@@ -1,11 +1,12 @@
 /* Офлайн-кэш справочника. При изменении файлов увеличить номер CACHE. */
-var CACHE = "lift-v4";
+var CACHE = "lift-v5";
 var ASSETS = [
   "./",
   "index.html",
   "app.css",
   "app.js",
   "data.js",
+  "details.js",
   "manifest.webmanifest",
   "icons/icon-192.png",
   "icons/icon-512.png",
