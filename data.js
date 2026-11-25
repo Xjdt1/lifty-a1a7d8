@@ -94,7 +94,45 @@ window.LIFTS = [
 <li><b>307</b><span>платы на связи</span></li>
 <li><b>309</b><span>номер в группе</span></li>
 </ul></td></tr>
-<tr><td class="k">40</td><td><span class="pill no">не трогать</span> Настройка. Вход ставит лифт в режим 52 и гонит кабину на этаж шкафа. Выход: <kbd>ESC</kbd> до «40 … 1», <kbd>↓</kbd> до 0, <kbd>OK</kbd>.</td></tr>
+<tr><td class="k">40</td><td><span class="pill no">не трогать</span> Настройка. Вход ставит лифт в режим 52 и гонит кабину на этаж шкафа. Выход: <kbd>ESC</kbd> до «40 … 1», <kbd>↓</kbd> до 0, <kbd>OK</kbd>.<details><summary>Меню 40 · группы параметров</summary><p><b>CF</b> — группа, <b>PA</b> — параметр внутри группы, <b>VL</b> — его значение. Набор групп зависит от версии ПО.</p><ul class="sub">
+<li><b>CF 00</b><span>Устройства BIOBUS</span></li>
+<li><b>CF 01</b><span>Обозначения остановок</span></li>
+<li><b>CF 02</b><span>Обслуживание</span></li>
+<li><b>CF 03</b><span>Таймеры дверей</span></li>
+<li><b>CF 04</b><span>Парная работа и время</span></li>
+<li><b>CF 05</b><span>Кнопки кабинных панелей COP</span></li>
+<li><b>CF 06</b><span>Настройки COP</span></li>
+<li><b>CF 07</b><span>Этажные панели LOP/LIN</span></li>
+<li><b>CF 08</b><span>Нагрузка кабины</span></li>
+<li><b>CF 09</b><span>Определитель тревоги</span></li>
+<li><b>CF 10</b><span>PIN защищённого приказа (до версии 9.3)</span></li>
+<li><b>CF 11</b><span>Счётчик поездок и часы работы</span></li>
+<li><b>CF 12</b><span>Версии программ плат</span></li>
+<li><b>CF 13</b><span>Аппаратные версии плат</span></li>
+<li><b>CF 14</b><span>Таймеры NS21</span></li>
+<li><b>CF 15</b><span>Панель COP (5) B_N</span></li>
+<li><b>CF 16</b><span>Привод FC</span></li>
+<li><b>CF 17</b><span>Уровень доступа посетителя (до 9.6x)</span></li>
+<li><b>CF 18</b><span>Дверной привод Varidor 15</span></li>
+<li><b>CF 19</b><span>Двухскоростной привод</span></li>
+<li><b>CF 21</b><span>Встроенный TM 4</span></li>
+<li><b>CF 26</b><span>Большое межэтажное расстояние</span></li>
+<li><b>CF 28</b><span>Контроль STM</span></li>
+<li><b>CF 30</b><span>Независимая дверь</span></li>
+<li><b>CF 32</b><span>Энергосбережение</span></li>
+<li><b>CF 40</b><span>Узлы BIOBUS (с версии 9.3)</span></li>
+<li><b>CF 41</b><span>Функции ограниченного доступа (с версии 9.3)</span></li>
+<li><b>CF 49</b><span>Дополнительные входы и выходы ADDU-SIEU (с версии 9.7)</span></li>
+<li><b>CF 55</b><span>Входы и выходы первой COPH</span></li>
+<li><b>CF 56</b><span>Входы и выходы второй COPH</span></li>
+<li><b>CF 86</b><span>Базовый уровень асимметричной группы</span></li>
+<li><b>CF 90</b><span>Первая плата ввода-вывода CAN</span></li>
+<li><b>CF 91</b><span>Вторая плата ввода-вывода CAN</span></li>
+<li><b>CF 95</b><span>Фактическая масса груза в кабине</span></li>
+<li><b>CF 96</b><span>Значения системы взвешивания CLC</span></li>
+<li><b>CF 97</b><span>Конфигурация CLC</span></li>
+<li><b>CF 98</b><span>Частота при пустой кабине</span></li>
+<li><b>CF 99</b><span>Калибровка частоты при эталонной нагрузке</span></li></ul><p>Schindler Bionic, K 608208_RU_13, § 5.3, с. 128–132.</p></details></td></tr>
 <tr><td class="k">50</td><td><span class="pill ok">смотреть</span>
 <ul class="sub">
 <li><b>501</b><span>журнал: 30 событий, 01 — самое свежее</span></li>
