@@ -197,7 +197,7 @@
     }
 
     GROUPS.forEach(function (g) {
-      html += '<details class="station-group"><summary><span>' + esc(g.title) + '</span><small>' + g.ids.length + '</small></summary><nav class="list">';
+      html += '<details class="station-group"><summary><i class="shaft" aria-hidden="true"></i><span>' + esc(g.title) + '</span><small>' + g.ids.length + '</small></summary><nav class="list">';
       g.ids.forEach(function (id) {
         var l = byId[id];
         if (!l) return;
