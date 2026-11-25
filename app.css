@@ -243,7 +243,6 @@ mark.find { background: var(--mark); color: inherit; border-radius: 3px; padding
 .foot { color: var(--muted); font-size: 0.8rem; text-align: center; margin: 22px 8px 0; }
 .foot .status { display: inline-block; padding: 4px 10px; border-radius: 999px; background: var(--chip); margin-bottom: 8px; }
 .foot .status.ready { background: var(--ok-bg); color: var(--ok); }
-.ident td.k { width: 42%; }
 
 /* ---------- modal для детальной информации о кодах ошибок ---------- */
 .modal-overlay {

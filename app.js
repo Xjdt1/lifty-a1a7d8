@@ -11,17 +11,6 @@
     { title: "Отечественные", ids: ["ukl", "ul", "uel", "shk6000", "shulm", "nku-mppl"] }
   ];
   var BADGE = { schindler3300: "Sch", "otis-gen2": "Otis", ukl: "УКЛ", ul: "УЛ", uel: "УЭЛ", shk6000: "ШК", shulm: "ШУЛМ", "nku-mppl": "МППЛ" };
-  var IDENT = [
-    ["Плата SEM 22, экран 2×8, шкаф в дверной раме верхнего этажа", "schindler3300"],
-    ["Платы GECB, LCB II или TCBC, разъём для сервис-тула", "otis-gen2"],
-    ["Надпись УКЛ, плата МПУ с индикатором", "ukl"],
-    ["Надпись УЛ, плата ПУ-3", "ul"],
-    ["Плата ЦПУ с двумя цифрами и плата ПК «КОНТРОЛЬ 110В», на микросхеме УИРФ", "uel"],
-    ["Шкаф ШК6000 «Электро-Импульс», плата ЦК6000 с синим экраном в 4 строки", "shk6000"],
-    ["Шкаф ШУЛМ, контроллер ПКЛ32", "shulm"],
-    ["НКУ-МППЛ или ЛиРа, блок БПШ", "nku-mppl"]
-  ];
-
   var app = document.getElementById("app");
   var state = { liftId: null, query: "", homeScroll: 0, liftScroll: 0, findWords: null, offline: false };
 
@@ -217,12 +206,6 @@
       });
       html += "</nav>";
     });
-
-    html += '<h2 class="group-title">Какая у меня система?</h2><div class="card ident"><table><tbody>' +
-      IDENT.map(function (r) {
-        return '<tr><td>' + esc(r[0]) + '</td><td class="k"><a href="#/l/' + r[1] + '">' + esc(byId[r[1]].name) + "</a></td></tr>";
-      }).join("") +
-      '</tbody></table><p class="group-note" style="margin-top:10px">Лифты МЛМ, ЩЛЗ, КМЗ и ОТИС-СПб комплектуют разными шкафами — смотрите надпись на шкафу управления.</p></div>';
 
     html += "</div>" + footer() + "</main>";
     app.innerHTML = html;
