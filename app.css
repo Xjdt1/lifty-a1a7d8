@@ -363,3 +363,11 @@ button,summary,a { touch-action:manipulation; }
 .modal-content {padding:12px}
 .code-modal-section {margin-block:8px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}}
+.lift-group {padding:0; overflow:hidden; --signal:var(--accent);}
+.lift-group h2 {margin:0; font-size:1rem;}
+.lift-group .group-toggle {background:var(--card); color:var(--fg); min-height:44px; padding:9px 12px;}
+.lift-group .group-toggle::after {margin-left:auto; flex:none;}
+.lift-group .group-toggle[aria-expanded="true"] {background:var(--accent-bg);}
+.lift-group:has(.group-toggle[aria-expanded="true"]) .group-panel {grid-template-rows:1fr; opacity:1;}
+.lift-group .section-clip {min-height:0; overflow:hidden;}
+.lift-group .section-content {padding:10px 12px;}

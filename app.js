@@ -182,6 +182,16 @@
   }
 
   /* ---------- pages ---------- */
+  function bindGroups() {
+    app.querySelectorAll(".group-toggle").forEach(function (button) {
+      button.addEventListener("click", function () {
+        var open = button.getAttribute("aria-expanded") !== "true";
+        button.setAttribute("aria-expanded", String(open));
+        document.getElementById(button.getAttribute("aria-controls")).toggleAttribute("inert", !open);
+      });
+    });
+  }
+
   function renderHome() {
     state.liftId = null;
     document.title = "Лифты";
@@ -211,13 +221,7 @@
     html += "</div>" + footer() + "</main>";
     app.innerHTML = html;
 
-    app.querySelectorAll(".group-toggle").forEach(function (button) {
-      button.addEventListener("click", function () {
-        var open = button.getAttribute("aria-expanded") !== "true";
-        button.setAttribute("aria-expanded", String(open));
-        document.getElementById(button.getAttribute("aria-controls")).toggleAttribute("inert", !open);
-      });
-    });
+    bindGroups();
     var q = document.getElementById("q");
     var clr = document.getElementById("qClear");
     q.addEventListener("input", function () {
@@ -241,39 +245,38 @@
     state.liftId = l.id;
     document.title = l.name;
     var back = '<a class="bar-btn" href="#/">' + ICON_BACK + "Лифты</a>";
-    var chips = l.sections.map(function (s) {
-      return '<a class="chip" href="#/l/' + l.id + "/s-" + s.id + '">' + esc(s.title) + "</a>";
-    }).join("") + l.codeGroups.map(function (g, gi) {
-      return '<a class="chip code" href="#/l/' + l.id + "/g-" + gi + '">' + (l.codeGroups.length > 1 ? esc(g.title.split(" (")[0]) : "Коды") + "</a>";
-    }).join("");
-
     var html = bar(back, l.name) + '<main class="wrap">' +
       '<div class="lift-head"><h1>' + esc(l.name) + "</h1><p>" + esc(l.board) + " · " + esc(l.where) + "</p></div>" +
       '<div class="lift-tools"><label class="search">' + ICON_SEARCH +
       '<input id="lq" type="search" placeholder="Найти в ' + esc(l.name.split(" (")[0]) + ': код или слово" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">' +
       '<button class="clear" id="lqClear" aria-label="Очистить" hidden>✕</button></label>' +
-      '<nav class="chips">' + chips + "</nav></div>" +
+      '</div>' +
       '<div id="liftResults" hidden></div><div id="liftBody">' +
       '<div class="callout safety">Смотреть экран и журнал — безопасно. Сброс, настройку и особые режимы делает только электромеханик с допуском к этому лифту.</div>' +
       (l.note ? '<div class="callout info">' + esc(l.note) + "</div>" : "");
 
+    function section(id, title, content) {
+      return '<section class="card lift-group" id="' + id + '"><h2><button type="button" class="group-toggle" aria-expanded="false" aria-controls="panel-' + id + '">' +
+        esc(title) + '</button></h2><div class="group-panel" id="panel-' + id + '" inert><div class="section-clip"><div class="section-content">' +
+        content + '</div></div></div></section>';
+    }
     l.sections.forEach(function (s) {
-      html += '<section class="card" id="s-' + s.id + '"><h2>' + esc(s.title) + "</h2>" + s.html + "</section>";
+      html += section("s-" + s.id, s.title, s.html);
     });
-
     l.codeGroups.forEach(function (g, gi) {
-      html += '<section class="card" id="g-' + gi + '"><h2>' + esc(g.title) + "</h2>" +
-        (g.note ? '<p class="group-note">' + esc(g.note) + "</p>" : "") +
-        '<div class="codes" id="codes-' + gi + '">' +
-        g.items.map(function (it) {
-          return '<div class="code-row" id="' + codeAnchor(gi, it[0]) + '"><span class="c">' + esc(it[0]) + "</span><span>" + esc(it[1]) + "</span></div>";
-        }).join("") + "</div></section>";
+      var rows = g.items.map(function (it) {
+        return '<div class="code-row" id="' + codeAnchor(gi, it[0]) + '"><span class="c">' + esc(it[0]) + "</span><span>" + esc(it[1]) + "</span></div>";
+      }).join("");
+      html += section("g-" + gi, g.title, (g.note ? '<p class="group-note">' + esc(g.note) + "</p>" : "") +
+        '<div class="codes" id="codes-' + gi + '">' + rows + "</div>");
     });
-
-    html += '<section class="card sources"><h2>Источники</h2><ul>' + l.sources.map(function (s) {
-      return '<li><a href="' + esc(s.u) + '" target="_blank" rel="noopener">' + esc(s.t) + "</a></li>";
-    }).join("") + "</ul></section></div>" + footer() + "</main>";
-    app.innerHTML = html;
+    if (l.sources.length) {
+      html += section("sources", "Источники", "<ul>" + l.sources.map(function (s) {
+        return '<li><a href="' + esc(s.u) + '" target="_blank" rel="noopener">' + esc(s.t) + "</a></li>";
+      }).join("") + "</ul>");
+    }
+    app.innerHTML = html + "</div>" + footer() + "</main>";
+    bindGroups();
 
     /* поиск внутри лифта: результаты вместо содержимого, нажатие — переход к месту */
     var lq = document.getElementById("lq");
@@ -347,6 +350,16 @@
     if (!anchor) return;
     var el = document.getElementById(anchor);
     if (!el) return;
+    var group = el.closest(".lift-group");
+    if (group) {
+      var button = group.querySelector(".group-toggle");
+      var panel = document.getElementById(button.getAttribute("aria-controls"));
+      panel.style.transition = "none";
+      button.setAttribute("aria-expanded", "true");
+      panel.removeAttribute("inert");
+      panel.getBoundingClientRect();
+      panel.style.transition = "";
+    }
     var target = el, block = "start";
     if (el.classList.contains("code-row")) { el.classList.add("hit"); block = "center"; }
     else if (words && words.length) {
