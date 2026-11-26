@@ -1,5 +1,5 @@
 /* Офлайн-кэш справочника. При изменении файлов увеличить номер CACHE. */
-var CACHE = "lift-v15";
+var CACHE = "lift-v16";
 var ASSETS = [
   "./",
   "index.html",

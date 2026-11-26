@@ -7,9 +7,9 @@
   LIFTS.forEach(function (l) { byId[l.id] = l; });
 
   var GROUPS = [
-    { title: "Иностранные", ids: ["schindler3300", "otis-gen2"] },
-    { title: "Отечественные", ids: ["ukl", "ul", "uel", "shk6000", "shulm", "nku-mppl"] },
-    { title: "Приводы", ids: ["abb-acsm1", "schindler-fc", "varidor-15", "otis-drive", "buad-4-25"] }
+    { title: "Иностранные", ids: ["schindler3300", "otis-gen2", "arkel", "doppler", "hidral", "hyundai", "igv", "kleemann", "liftmaterial", "mitsubishi", "monitor", "orona", "sigma", "sodimas", "ssl", "step", "sword", "tke", "wittur", "xizi"] },
+    { title: "Отечественные", ids: ["ukl", "ul", "uel", "shk6000", "shulm", "nku-mppl", "mel", "metrolift", "ob"] },
+    { title: "Приводы", ids: ["abb-acsm1", "schindler-fc", "varidor-15", "otis-drive", "buad-4-25", "hivd900", "n700", "frenic", "as320"] }
   ];
   var BADGE = { schindler3300: "Sch", "otis-gen2": "Otis", ukl: "УКЛ", ul: "УЛ", uel: "УЭЛ", shk6000: "ШК", shulm: "ШУЛМ", "nku-mppl": "МППЛ" };
   var app = document.getElementById("app");
